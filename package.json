@@ -1,0 +1,13 @@
+{
+  "name": "spotilist",
+  "version": "1.0.0",
+  "description": "Spotify Liked Tracks, Saved Albums & Top Tracks analyzer with Tempo-First and Mood-Second playlist generation",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpotiList — Tempo &amp; Ruh Hali Stüdyosu</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M3 16c3-7 6 7 9-4s6 5 9-3" />
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">SpotiList</div>
+          <div class="brand-sub" data-i18n="brandSub">Tempo Öncelikli • Ruh Hali Uyumlu Liste Stüdyosu</div>
+        </div>
+      </div>
+
+      <nav class="nav-tabs" role="tablist">
+        <button class="nav-tab active" data-tab="studio" data-i18n="tabStudio">Stüdyo</button>
+        <button class="nav-tab" data-tab="analytics" data-i18n="tabAnalytics">Analiz &amp; Harita</button>
+        <button class="nav-tab" data-tab="library" data-i18n="tabLibrary">Kütüphane</button>
+        <button class="nav-tab" data-tab="connect" data-i18n="tabConnect">Spotify &amp; Yükle</button>
+      </nav>
+
+      <div class="topbar-meta">
+        <span id="libraryBadge" class="pill pill-accent">Kütüphane Boş</span>
+        <button id="langToggle" class="btn btn-ghost btn-sm" title="TR / EN">TR</button>
+      </div>
+    </header>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+
+    <!-- TAB 1: STUDIO -->
+    <main id="tab-studio" class="tab-panel active">
+      <!-- Empty Library Onboarding Banner -->
+      <section id="emptyLibraryBanner" class="card empty-banner hidden">
+        <div>
+          <h3>Hoş geldiniz! Kütüphaneniz şu an boş.</h3>
+          <p class="muted">Kafa karışıklığı olmaması için demo verileri otomatik yüklenmedi. Gerçek Spotify hesabınızı bağlayabilir veya isteğe bağlı olarak 96 parçalık demo kütüphaneyi test edebilirsiniz.</p>
+        </div>
+        <div class="btn-row">
+          <button id="goConnectBtn" class="btn btn-spotify">Spotify Hesabını Bağla (Canlı)</button>
+          <button id="emptyLoadDemoBtn" class="btn btn-secondary">Demo Verisiyle Test Et (96 Parça)</button>
+        </div>
+      </section>
+
+      <!-- Smart Scenario Presets Bar -->
+      <section class="card scenario-bar">
+        <div class="scenario-head">
+          <div class="scenario-head-left">
+            <span class="rule-badge rule-1">AKILLI ŞABLONLAR</span>
+            <span class="muted">Tek tıkla uygulayın, mevcut ayarlarınızı şablon olarak ekleyin veya silin:</span>
+          </div>
+          <div class="btn-row" style="margin:0;">
+            <button id="openAddScenarioBtn" class="btn btn-secondary btn-sm">+ Mevcut Ayarı Şablon Ekle</button>
+            <button id="resetScenariosBtn" class="btn btn-ghost btn-sm" title="Varsayılan şablonları geri yükle">Varsayılanlar</button>
+          </div>
+        </div>
+        <div id="addScenarioForm" class="add-scenario-form hidden">
+          <input id="newScenarioIcon" type="text" value="🎧" maxlength="4" style="width:56px; text-align:center;" />
+          <input id="newScenarioName" type="text" placeholder="Şablon adı (örn: 120 BPM Gece Kodlama)" />
+          <input id="newScenarioDesc" type="text" placeholder="Kısa açıklama (opsiyonel)" />
+          <button id="saveNewScenarioBtn" class="btn btn-primary btn-sm">Kaydet</button>
+          <button id="cancelNewScenarioBtn" class="btn btn-ghost btn-sm">İptal</button>
+        </div>
+        <div id="scenarioPresetsGrid" class="scenario-grid"></div>
+      </section>
+
+      <div class="studio-layout">
+        <aside class="control-rail">
+          <!-- Rule 1: Tempo -->
+          <section class="card">
+            <div class="card-head">
+              <span class="rule-badge rule-1" data-i18n="rule1Badge">1. KURAL • EN ÖNEMLİ</span>
+              <h2 data-i18n="tempoTitle">Tempo (BPM) Kontrolü</h2>
+            </div>
+
+            <div class="field">
+              <label data-i18n="tempoCurveLabel">Tempo Eğrisi</label>
+              <div id="curveSelector" class="curve-grid"></div>
+            </div>
+
+            <div id="steadyBpmControls" class="field">
+              <div class="label-row">
+                <label for="targetBpm" data-i18n="targetBpmLabel">Hedef Tempo</label>
+                <span class="val-readout"><strong id="targetBpmVal">122</strong> BPM</span>
+              </div>
+              <input id="targetBpm" type="range" min="60" max="180" step="1" value="122" />
+              <div class="preset-chips">
+                <button type="button" class="chip" data-bpm="78">78 Chill</button>
+                <button type="button" class="chip" data-bpm="98">98 Indie</button>
+                <button type="button" class="chip" data-bpm="116">116 Synth</button>
+                <button type="button" class="chip active" data-bpm="122">122 House</button>
+                <button type="button" class="chip" data-bpm="134">134 Peak</button>
+                <button type="button" class="chip" data-bpm="160">160 Koşu</button>
+              </div>
+            </div>
+
+            <div id="rangeBpmControls" class="field hidden">
+              <div class="label-row">
+                <label data-i18n="bpmRangeLabel">BPM Aralığı (Min – Max)</label>
+                <span class="val-readout"><strong id="minBpmVal">95</strong> – <strong id="maxBpmVal">135</strong> BPM</span>
+              </div>
+              <div class="dual-range">
+                <input id="minBpm" type="range" min="60" max="175" step="1" value="95" />
+                <input id="maxBpm" type="range" min="65" max="185" step="1" value="135" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label data-i18n="toleranceLabel">Tempo Toleransı</label>
+              <div id="toleranceGroup" class="segmented">
+                <button type="button" data-tol="3" data-i18n="tolStrict">±3 Sıkı</button>
+                <button type="button" data-tol="6" class="active" data-i18n="tolBalanced">±6 Dengeli</button>
+                <button type="button" data-tol="12" data-i18n="tolWide">±12 Esnek</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="tempoWeight" data-i18n="tempoWeightLabel">Tempo Öncelik Ağırlığı</label>
+                <span class="val-readout"><strong id="tempoWeightVal">65</strong>%</span>
+              </div>
+              <input id="tempoWeight" type="range" min="50" max="85" step="5" value="65" />
+              <div class="priority-bar" id="priorityBar">
+                <span class="pb-tempo" style="width:65%">Tempo 65%</span>
+                <span class="pb-mood" style="width:25%">Ruh Hali 25%</span>
+                <span class="pb-aff" style="width:10%">10%</span>
+              </div>
+            </div>
+
+            <label class="toggle-row">
+              <input id="allowHarmonicTempo" type="checkbox" />
+              <span data-i18n="harmonicTempoLabel">Yarı/Çift Tempo Eşleşmesine İzin Ver (70 ↔ 140 BPM)</span>
+            </label>
+
+            <label class="toggle-row">
+              <input id="preferHarmonicKeys" type="checkbox" checked />
+              <span data-i18n="camelotLabel">Camelot Wheel Harmonik Ton Sıralaması (DJ Geçişi)</span>
+            </label>
+          </section>
+
+          <!-- Rule 2: Mood -->
+          <section class="card">
+            <div class="card-head">
+              <span class="rule-badge rule-2" data-i18n="rule2Badge">2. KURAL • RUH HALİ</span>
+              <h2 data-i18n="moodTitle">Hissettirdiği Ruh Hali</h2>
+            </div>
+
+            <div id="moodGrid" class="mood-grid"></div>
+
+            <div class="field">
+              <label data-i18n="moodStrictnessLabel">Ruh Hali Sıkılığı</label>
+              <div id="moodStrictnessGroup" class="segmented">
+                <button type="button" data-strict="off" data-i18n="strictOff">Serbest</button>
+                <button type="button" data-strict="balanced" class="active" data-i18n="strictBalanced">Dengeli</button>
+                <button type="button" data-strict="strict" data-i18n="strictHigh">Katı</button>
+              </div>
+            </div>
+
+            <details class="custom-mood-details">
+              <summary data-i18n="customMoodToggle">İnce Duygu Ayarı (Valence / Enerji / Akustik)</summary>
+              <div class="custom-mood-box">
+                <label class="toggle-row">
+                  <input id="useCustomMood" type="checkbox" />
+                  <span data-i18n="enableCustomMood">Özel duygu hedeflerini aktif et</span>
+                </label>
+                <div class="mini-slider">
+                  <span>Valence (Pozitiflik)</span>
+                  <input id="customValence" type="range" min="0" max="100" value="65" />
+                </div>
+                <div class="mini-slider">
+                  <span>Enerji</span>
+                  <input id="customEnergy" type="range" min="0" max="100" value="72" />
+                </div>
+                <div class="mini-slider">
+                  <span>Dans Edilebilirlik</span>
+                  <input id="customDanceability" type="range" min="0" max="100" value="70" />
+                </div>
+                <div class="mini-slider">
+                  <span>Akustiklik</span>
+                  <input id="customAcousticness" type="range" min="0" max="100" value="15" />
+                </div>
+              </div>
+            </details>
+          </section>
+
+          <!-- Rule 3: Music Genre & Sonic Universe -->
+          <section class="card">
+            <div class="card-head">
+              <span class="rule-badge rule-2">3. KURAL • TARZ &amp; SES DÜNYASI</span>
+              <h2>Müzik Tarzı, Dil &amp; Vokal</h2>
+              <p class="muted" style="margin-top:4px;">1 tık: <strong>Dahil Et (✓)</strong> • 2 tık: <strong>Hariç Tut (✕)</strong> • 3 tık: Sıfırla</p>
+            </div>
+            <div id="genreChipsGrid" class="genre-grid" style="margin-bottom:12px;"></div>
+            <div class="two-col">
+              <div class="field">
+                <label for="languageMode">Liste Dili / Evreni</label>
+                <select id="languageMode">
+                  <option value="auto" selected>Otomatik (Aynı Evren)</option>
+                  <option value="tr">Sadece Türkçe</option>
+                  <option value="intl">Sadece Yabancı</option>
+                  <option value="all">Karışık</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="vocalMode">Vokal Yoğunluğu</label>
+                <select id="vocalMode">
+                  <option value="all" selected>Fark Etmez</option>
+                  <option value="vocal">Vokalli Parçalar</option>
+                  <option value="instrumental">Enstrümantal (Sözsüz)</option>
+                </select>
+              </div>
+            </div>
+            <label class="toggle-row">
+              <input id="sonicCohesion" type="checkbox" checked />
+              <span>Ses Dünyası Bütünlüğü (Tarz, Vokal &amp; Duygu Uçurumunu Engelle)</span>
+            </label>
+          </section>
+
+          <!-- Rule 4: Library Sources & Discovery -->
+          <section class="card">
+            <div class="card-head">
+              <span class="rule-badge rule-3" data-i18n="rule3Badge">4. KAYNAK &amp; KEŞİF</span>
+              <h2 data-i18n="sourcesTitle">Beğeni, Albüm, Çok Dinlenen &amp; Keşif</h2>
+            </div>
+
+            <div class="field">
+              <label data-i18n="sourceFilterLabel">Kaynak Filtresi</label>
+              <select id="sourceFilter">
+                <option value="all" data-i18n="srcAll">Tüm Kütüphane (Sevilen + Albüm + Çok Dinlenen)</option>
+                <option value="liked" data-i18n="srcLiked">Sadece Sevdiğim Parçalar</option>
+                <option value="album" data-i18n="srcAlbum">Sadece Kaydettiğim Albümler</option>
+                <option value="top" data-i18n="srcTop">Sadece Çok Dinlediklerim</option>
+              </select>
+            </div>
+
+            <div class="source-weights">
+              <div class="mini-slider">
+                <span>♥ Sevilen (<strong id="wLikedVal">1.0</strong>)</span>
+                <input id="wLiked" type="range" min="0" max="2" step="0.1" value="1.0" />
+              </div>
+              <div class="mini-slider">
+                <span>💿 Albüm (<strong id="wAlbumVal">0.9</strong>)</span>
+                <input id="wAlbum" type="range" min="0" max="2" step="0.1" value="0.9" />
+              </div>
+              <div class="mini-slider">
+                <span>🔥 Çok Dinlenen (<strong id="wTopVal">1.2</strong>)</span>
+                <input id="wTop" type="range" min="0" max="2" step="0.1" value="1.2" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Liste Uzunluğu Modu</label>
+              <div id="selectionModeGroup" class="segmented segmented-2">
+                <button type="button" data-selmode="count" class="active">Parça Sayısı</button>
+                <button type="button" data-selmode="duration">Hedef Süre (dk)</button>
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div id="trackCountWrap" class="field">
+                <label for="trackCount" data-i18n="trackCountLabel">Parça Sayısı</label>
+                <input id="trackCount" type="number" min="3" max="50" value="14" />
+              </div>
+              <div id="durationWrap" class="field hidden">
+                <label for="targetDurationMinutes">Hedef Süre (dk)</label>
+                <input id="targetDurationMinutes" type="number" min="15" max="180" step="5" value="45" />
+              </div>
+              <div class="field">
+                <label for="artistCooldown" data-i18n="artistCooldownLabel">Sanatçı Aralığı</label>
+                <input id="artistCooldown" type="number" min="0" max="5" value="2" />
+              </div>
+            </div>
+
+            <div class="discovery-box">
+              <div class="field">
+                <div class="label-row">
+                  <label for="discoveryRatio">✨ Kütüphane Dışı Keşif Oranı</label>
+                  <span class="val-readout"><strong id="discoveryRatioVal">0</strong>%</span>
+                </div>
+                <input id="discoveryRatio" type="range" min="0" max="50" step="5" value="0" />
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label for="discoverySeedSource">Keşif İlham Kaynağı</label>
+                  <select id="discoverySeedSource">
+                    <option value="mixed">Karışık (Tümü)</option>
+                    <option value="liked">Sevdiğim Parçalar</option>
+                    <option value="top">Çok Dinlediklerim</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="discoveryPlacement">Listede Yerleşim</label>
+                  <select id="discoveryPlacement">
+                    <option value="interleaved">Dengeli Serpiştir</option>
+                    <option value="outro">Listenin Sonuna Doğru</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field" style="margin-bottom:0;">
+                <label for="discoveryTempoFlex">Keşif Tempo Esnekliği</label>
+                <select id="discoveryTempoFlex">
+                  <option value="0">Liste Temposuna Sıkı Bağlı (+0 BPM)</option>
+                  <option value="4">Biraz Daha Esnek (+4 BPM)</option>
+                  <option value="8">Geniş Keşif (+8 BPM)</option>
+                </select>
+              </div>
+            </div>
+
+            <button id="generateBtn" class="btn btn-primary btn-full" data-i18n="generateBtn">
+              Tempo &amp; Ruh Hali Listesi Oluştur
+            </button>
+          </section>
+        </aside>
+
+        <section class="studio-canvas">
+          <!-- Top Actions & Metrics -->
+          <div class="card playlist-header-card">
+            <div class="playlist-title-row">
+              <input id="playlistNameInput" class="playlist-name-input" type="text" value="122 BPM • Dans & Enerji Akışı" />
+              <div class="action-buttons">
+                <button id="shuffleFreshBtn" class="btn btn-primary" title="Aynı kurallarla farklı parçalardan yeni liste üret">🔄 Farklı Liste Üret</button>
+                <button id="savePlaylistBtn" class="btn btn-secondary" data-i18n="saveBtn">Listeyi Kaydet</button>
+                <button id="pushSpotifyBtn" class="btn btn-spotify" data-i18n="pushSpotifyBtn">Spotify'a Aktar</button>
+                <div class="export-group">
+                  <button class="btn btn-ghost btn-sm" data-export="csv">CSV</button>
+                  <button class="btn btn-ghost btn-sm" data-export="m3u">M3U8</button>
+                  <button class="btn btn-ghost btn-sm" data-export="json">JSON</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="kpi-grid">
+              <div class="kpi">
+                <span class="kpi-label" data-i18n="kpiAvgBpm">Ortalama Tempo</span>
+                <strong id="kpiAvgBpm" class="kpi-value">—</strong>
+                <span id="kpiBpmRange" class="kpi-sub">—</span>
+              </div>
+              <div class="kpi">
+                <span class="kpi-label" data-i18n="kpiSmoothness">Beat Geçiş Pürüzsüzlüğü</span>
+                <strong id="kpiSmoothness" class="kpi-value">—</strong>
+                <span id="kpiMaxJump" class="kpi-sub">—</span>
+              </div>
+              <div class="kpi">
+                <span class="kpi-label" data-i18n="kpiMoodCohesion">Ruh Hali Uyumu</span>
+                <strong id="kpiMoodCohesion" class="kpi-value">—</strong>
+                <span id="kpiPoolInfo" class="kpi-sub">—</span>
+              </div>
+              <div class="kpi">
+                <span class="kpi-label" data-i18n="kpiDuration">Süre &amp; Kaynak</span>
+                <strong id="kpiDuration" class="kpi-value">—</strong>
+                <span id="kpiSources" class="kpi-sub">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tempo & Mood Curve Visualization -->
+          <div class="card chart-card">
+            <div class="chart-head">
+              <div>
+                <h3 data-i18n="curveChartTitle">Liste Tempo (BPM) &amp; Ruh Hali Eğrisi</h3>
+                <p class="muted" data-i18n="curveChartSub">Kesik çizgi hedef tempo eğrisini, yeşil sütun/çizgi seçilen parçaların BPM akışını gösterir.</p>
+              </div>
+              <div class="chart-legend">
+                <span><i class="dot dot-target"></i> Hedef BPM</span>
+                <span><i class="dot dot-actual"></i> Parça BPM</span>
+                <span><i class="dot dot-energy"></i> Enerji %</span>
+              </div>
+            </div>
+            <div id="playlistCurveChart" class="svg-host"></div>
+          </div>
+
+          <!-- Generated Tracklist -->
+          <div class="card tracks-card">
+            <div class="tracks-head">
+              <h3 data-i18n="generatedTracksTitle">Oluşturulan Müzik Listesi</h3>
+              <div class="deck-controls">
+                <span id="poolWarning" class="pool-warning hidden"></span>
+                <select id="crossfadeSeconds" class="deck-select" title="Crossfade süresi">
+                  <option value="3">Crossfade 3 sn</option>
+                  <option value="4" selected>Crossfade 4 sn</option>
+                  <option value="6">Crossfade 6 sn</option>
+                </select>
+                <button id="stopDeckBtn" class="btn btn-ghost btn-sm hidden">■ Durdur</button>
+              </div>
+            </div>
+            <div id="previewDeckBar" class="deck-bar hidden">
+              <span id="previewDeckLabel" class="deck-label">Hazır</span>
+              <div id="previewDeckProgressWrap" class="deck-progress-track">
+                <div id="previewDeckProgress" class="deck-progress-fill" style="width:0%"></div>
+              </div>
+              <div id="spotifyEmbedHost" class="hidden"></div>
+            </div>
+            <div class="table-wrap">
+              <table class="track-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th data-i18n="thTrack">Parça &amp; Sanatçı</th>
+                    <th data-i18n="thSources">Kaynaklar</th>
+                    <th data-i18n="thBpm">Tempo &amp; ΔBPM</th>
+                    <th>Ton (Camelot)</th>
+                    <th data-i18n="thMood">Ruh Hali</th>
+                    <th data-i18n="thScore">Skor Dağılımı</th>
+                    <th>Ön Dinle &amp; Sıra</th>
+                  </tr>
+                </thead>
+                <tbody id="playlistTracksBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Saved Playlists -->
+          <div class="card">
+            <div class="card-head-inline">
+              <h3 data-i18n="savedPlaylistsTitle">Kayıtlı Listelerim</h3>
+              <span id="savedCount" class="muted">0</span>
+            </div>
+            <div id="savedPlaylistsGrid" class="saved-grid"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- TAB 2: ANALYTICS & QUADRANT -->
+    <main id="tab-analytics" class="tab-panel">
+      <div class="analytics-grid">
+        <div class="card span-2">
+          <div class="chart-head">
+            <div>
+              <h3 data-i18n="quadrantTitle">2D Tempo (BPM) × Ruh Hali (Pozitiflik) Haritası</h3>
+              <p class="muted" data-i18n="quadrantSub">Yatay eksen: Tempo (BPM) • Dikey eksen: Duygu Pozitifliği (%). Her nokta bir parçadır; renkler ruh halini gösterir.</p>
+            </div>
+            <div class="map-controls">
+              <label class="toggle-row" style="margin:0;">
+                <input id="showPlaylistPathToggle" type="checkbox" checked />
+                <span>Aktif Liste Rotasını (1→2→3) Göster</span>
+              </label>
+              <div id="quadrantTooltip" class="quadrant-tooltip">Parça detayı için noktaların üzerine gelin</div>
+            </div>
+          </div>
+          <div class="map-legend">
+            <span><i class="dot" style="background:#f59e0b"></i> Enerjik &amp; Mutlu</span>
+            <span><i class="dot" style="background:#10b981"></i> Dans &amp; Ritim</span>
+            <span><i class="dot" style="background:#38bdf8"></i> Odak &amp; Akış</span>
+            <span><i class="dot" style="background:#34d399"></i> Huzurlu &amp; Akustik</span>
+            <span><i class="dot" style="background:#818cf8"></i> Melankolik</span>
+            <span><i class="dot" style="background:#f43f5e"></i> Karanlık &amp; Yoğun</span>
+            <span><i class="dot" style="background:#ffffff"></i> Beyaz Rota = Aktif Liste Sırası</span>
+          </div>
+          <div id="quadrantChart" class="svg-host tall"></div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="histogramTitle">Tempo (BPM) Dağılım Histogramı</h3>
+          <p class="muted" data-i18n="histogramSub">Sevdiğiniz, albümden gelen ve çok dinlediğiniz parçaların BPM yoğunluğu.</p>
+          <div id="tempoHistogramChart" class="svg-host"></div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="moodBreakdownTitle">Kütüphane Ruh Hali Dağılımı</h3>
+          <div id="moodBreakdownList" class="breakdown-list"></div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="topArtistsTitle">En Çok Dinlenen Sanatçılar &amp; Ortalama BPM</h3>
+          <div id="topArtistsList" class="compact-list"></div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="albumsTitle">Albüm Tempo Analizi</h3>
+          <div id="albumInsightsList" class="compact-list"></div>
+        </div>
+
+        <div class="card span-2">
+          <div class="chart-head">
+            <div>
+              <h3>Dinleme Geçmişi: Zaman Dilimi &amp; 28 Günlük Ruh Hali Takvimi</h3>
+              <p class="muted">Günün saatlerine göre ortalama BPM ve baskın ruh haliniz. Herhangi bir zaman dilimi için tek tıkla liste oluşturabilirsiniz.</p>
+            </div>
+            <span id="calendarSummaryBadge" class="pill">—</span>
+          </div>
+          <div id="timeOfDayGrid" class="tod-grid"></div>
+          <div class="calendar-section">
+            <div class="muted" style="margin-bottom:8px;">Son 28 Günlük Ruh Hali Takvimi (Renk = Baskın Ruh Hali):</div>
+            <div id="moodCalendarGrid" class="calendar-grid"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- TAB 3: LIBRARY & BPM EDITOR -->
+    <main id="tab-library" class="tab-panel">
+      <div class="card">
+        <div class="library-toolbar">
+          <input id="libSearch" type="search" placeholder="Parça, sanatçı veya albüm ara..." />
+          <select id="libSourceFilter">
+            <option value="all">Tüm Kaynaklar</option>
+            <option value="liked">♥ Sevilenler</option>
+            <option value="album">💿 Albümler</option>
+            <option value="top">🔥 Çok Dinlenen</option>
+          </select>
+          <select id="libMoodFilter">
+            <option value="all">Tüm Ruh Halleri</option>
+          </select>
+          <button id="enrichBtn" class="btn btn-secondary">ReccoBeats ile BPM Zenginleştir</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="track-table">
+            <thead>
+              <tr>
+                <th>Parça</th>
+                <th>Albüm</th>
+                <th>Kaynak</th>
+                <th>BPM</th>
+                <th>Ruh Hali</th>
+                <th>Valence / Enerji</th>
+                <th>Veri Kaynağı</th>
+                <th>Düzenle</th>
+              </tr>
+            </thead>
+            <tbody id="libraryTracksBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- TAB 4: CONNECT & IMPORT -->
+    <main id="tab-connect" class="tab-panel">
+      <div class="connect-grid">
+        <div class="card">
+          <h3 data-i18n="spotifyConnectTitle">1. Spotify Hesabını Bağla (OAuth PKCE)</h3>
+          <p class="muted" data-i18n="spotifyConnectDesc">
+            Spotify Developer Dashboard'dan aldığınız Client ID ile doğrudan sevdiğiniz parçaları, kaydettiğiniz albümleri ve en çok dinlediğiniz şarkıları çekebilir; oluşturulan listeyi Spotify hesabınıza kaydedebilirsiniz.
+          </p>
+          <div class="field">
+            <label for="spotifyClientId">Spotify Client ID</label>
+            <input id="spotifyClientId" type="text" placeholder="Örn: a1b2c3d4e5f6..." />
+          </div>
+          <div class="field">
+            <label for="spotifyRedirectUri">Redirect URI (Spotify Dashboard'a ekleyin)</label>
+            <input id="spotifyRedirectUri" type="text" readonly />
+          </div>
+          <div class="btn-row">
+            <button id="saveSpotifyConfigBtn" class="btn btn-secondary">Client ID Kaydet</button>
+            <button id="spotifyLoginBtn" class="btn btn-spotify">Spotify ile Giriş Yap</button>
+            <button id="spotifySyncBtn" class="btn btn-primary">Kütüphaneyi Senkronize Et</button>
+            <button id="spotifyDisconnectBtn" class="btn btn-ghost">Bağlantıyı Kes</button>
+          </div>
+          <div id="spotifyStatusBox" class="status-box">Durum kontrol ediliyor...</div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="importTitle">2. Spotify Veri Paketi / Exportify CSV Yükle</h3>
+          <p class="muted" data-i18n="importDesc">
+            API kurulumu yapmadan Spotify Gizlilik Verilerinizden (YourLibrary.json, StreamingHistory_music_*.json) veya Exportify CSV dosyasından kütüphanenizi içeri aktarın.
+          </p>
+          <div class="two-col">
+            <div class="field">
+              <label for="importFormat">Dosya Formatı</label>
+              <select id="importFormat">
+                <option value="json">Spotify JSON (YourLibrary / StreamingHistory)</option>
+                <option value="csv">Exportify / Parça Listesi CSV</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="importSourceType">CSV Kaynak Tipi</label>
+              <select id="importSourceType">
+                <option value="liked">Sevdiğim Parçalar</option>
+                <option value="album">Albüm Parçaları</option>
+                <option value="top">Çok Dinlenenler</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="importFile">Dosya Seç (.json / .csv)</label>
+            <input id="importFile" type="file" accept=".json,.csv,.txt" />
+          </div>
+          <div class="field">
+            <label for="importPaste">veya İçeriği Yapıştır</label>
+            <textarea id="importPaste" rows="5" placeholder='[{"artistName":"Duman","trackName":"Senden Daha Güzel","msPlayed":235000}]'></textarea>
+          </div>
+          <label class="toggle-row">
+            <input id="importReplace" type="checkbox" />
+            <span>Mevcut kütüphaneyi temizleyip sadece bu veriyi yükle</span>
+          </label>
+          <div class="btn-row">
+            <button id="runImportBtn" class="btn btn-primary">İçe Aktar ve Analiz Et</button>
+            <button id="loadDemoBtn" class="btn btn-secondary">Demo Kütüphaneyi Yükle (96 Parça)</button>
+            <button id="clearLibraryBtn" class="btn btn-ghost">Kütüphaneyi Temizle</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- BPM Edit & Tap Modal -->
+    <div id="editModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="editModalTitle">BPM &amp; Ruh Hali Düzenle</h3>
+          <button id="closeModalBtn" class="btn btn-ghost btn-sm">✕</button>
+        </div>
+        <div class="field">
+          <label for="editBpm">Tempo (BPM)</label>
+          <div class="tap-row">
+            <input id="editBpm" type="number" min="40" max="220" step="0.5" />
+            <button id="tapTempoBtn" type="button" class="btn btn-secondary">Ritimle Tıkla (Tap BPM)</button>
+          </div>
+        </div>
+        <div class="mini-slider">
+          <span>Valence (Pozitiflik: <strong id="editValenceRead">50</strong>%)</span>
+          <input id="editValence" type="range" min="0" max="100" value="50" />
+        </div>
+        <div class="mini-slider">
+          <span>Enerji (<strong id="editEnergyRead">50</strong>%)</span>
+          <input id="editEnergy" type="range" min="0" max="100" value="50" />
+        </div>
+        <div class="mini-slider">
+          <span>Dans Edilebilirlik (<strong id="editDanceRead">50</strong>%)</span>
+          <input id="editDance" type="range" min="0" max="100" value="50" />
+        </div>
+        <div class="mini-slider">
+          <span>Akustiklik (<strong id="editAcousticRead">20</strong>%)</span>
+          <input id="editAcoustic" type="range" min="0" max="100" value="20" />
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label for="editKey">Müzikal Ton (Key)</label>
+            <select id="editKey">
+              <option value="">Bilinmiyor</option>
+              <option value="0">C</option><option value="1">C# / Db</option><option value="2">D</option>
+              <option value="3">Eb</option><option value="4">E</option><option value="5">F</option>
+              <option value="6">F# / Gb</option><option value="7">G</option><option value="8">Ab</option>
+              <option value="9">A</option><option value="10">Bb</option><option value="11">B</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="editMode">Mod (Majör / Minör)</label>
+            <select id="editMode">
+              <option value="">Bilinmiyor</option>
+              <option value="0">Minör (A)</option>
+              <option value="1">Majör (B)</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button id="saveTrackEditBtn" class="btn btn-primary">Kaydet ve Kilitle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

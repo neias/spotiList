@@ -1,0 +1,19 @@
+# Local SQLite database (contains personal Spotify library & OAuth tokens — NEVER commit!)
+/data/
+*.db
+*.db-shm
+*.db-wal
+
+# Environment & secrets
+.env
+.env.*
+
+# Dependencies & logs
+node_modules/
+npm-debug.log*
+*.log
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
